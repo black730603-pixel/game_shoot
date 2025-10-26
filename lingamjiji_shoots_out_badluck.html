@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINGAMJIJI SHOOTER</title>
+    <style>
+        /* 使用 Tailwind 概念的自定義CSS讓遊戲看起來更美觀，並確保移動端友好 */
+        html, body {
+            height: 100%; /* 確保 HTML 和 Body 佔滿整個視窗 */
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* 防止滾動條 */
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* 預設居中所有內容 */
+            justify-content: center; 
+            min-height: 100vh;
+            background-color: #2c3e50; /* 深藍色背景 */
+            font-family: 'Inter', sans-serif;
+            color: #ecf0f1;
+            box-sizing: border-box;
+        }
+        
+        /* 遊戲狀態下的 body 樣式調整，讓內容更靠頂部 */
+        body.game-active {
+            justify-content: flex-start;
+        }
+
+        #game-title {
+            margin: 0 0 5px 0; /* 極小的底部間距 */
+            text-align: center;
+            width: 100%;
+        }
+        #game-title h1 {
+            font-size: 1.8em;
+            color: #f1c40f;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            margin: 0;
+        }
+
+        #game-container {
+            width: 100%; /* 佔滿可用寬度 */
+            max-width: 600px; /* 限制最大寬度 */
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            background-color: #34495e;
+            position: relative;
+            
+            /* 關鍵改動：使其成為垂直 Flex 容器並佔滿剩餘高度 */
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1; 
+            
+            /* 極小的周圍邊界 */
+            margin: 5px; 
+            
+            /* 計算最大高度：100vh - 5px (上邊界) - 5px (下邊界) - title高度(由JS控制) */
+            max-height: calc(100vh - 10px); 
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            /* 關鍵改動：佔用所有垂直剩餘空間 */
+            flex-grow: 1; 
+            min-height: 200px; /* 確保最小高度 */
+            cursor: pointer; 
+        }
+
+        #ui-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            font-size: 0.8em;
+            background-color: #2c3e50;
+            /* 確保 UI panel 不會被壓縮 */
+            flex-shrink: 0; 
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+        
+        .game-info {
+            font-weight: bold;
+            flex: 1;
+            text-align: center;
+            white-space: nowrap; /* 防止文字換行 */
+        }
+        .game-info:first-child { text-align: left; }
+        .game-info:last-child { text-align: right; }
+
+        /* ------------------------------------- */
+        /* 生命值指示燈樣式 */
+        .life-indicators {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+        .life-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: 2px solid #ecf0f1;
+            transition: background-color 0.3s;
+        }
+        .life-green { background-color: #2ecc71; }
+        .life-yellow { background-color: #f1c40f; }
+        .life-red { background-color: #e74c3c; }
+        .life-grey { background-color: #7f8c8d; }
+        /* ------------------------------------- */
+
+        /* ------------------------------------- */
+        /* 充能條樣式 */
+        .charge-info {
+            flex: 2; /* 給予充能條更多空間 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .charge-bar-wrapper {
+            display: inline-block;
+            width: 60px;
+            height: 8px;
+            background-color: #7f8c8d;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #bdc3c7;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+        .charge-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #3498db;
+            transition: width 0.1s;
+        }
+        /* ------------------------------------- */
+        
+        /* ------------------------------------- */
+        /* Super Bomb Button Style */
+        #superBombButton {
+            position: absolute;
+            /* 放置在畫布的右下方，讓開砲台和底部 UI 面板 */
+            bottom: 75px; 
+            right: 15px;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 3px solid #f1c40f;
+            background-color: #34495e;
+            color: #ecf0f1;
+            font-weight: bold;
+            font-size: 1.2em;
+            cursor: pointer;
+            z-index: 5;
+            opacity: 0.5;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            /* 預設狀態：不干擾畫布點擊 */
+            pointer-events: none; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1;
+        }
+        /* 充能完畢時的樣式 */
+        #superBombButton.ready {
+            background-color: #e74c3c; /* 亮紅色 */
+            opacity: 1.0;
+            transform: scale(1.1);
+            pointer-events: auto; /* 啟用點擊 */
+            box-shadow: 0 0 15px #e74c3c, 0 0 5px #f1c40f;
+        }
+        #superBombButton:active.ready {
+            transform: scale(1.0);
+            box-shadow: 0 0 5px #e74c3c;
+        }
+        /* ------------------------------------- */
+
+        /* 遊戲開始/結束訊息框 (保持不變) */
+        #messageBox {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(44, 62, 80, 0.95);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.0em;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            gap: 10px;
+            transition: opacity 0.3s;
+        }
+        #messageBox h2 {
+            font-size: 1.0em;
+            margin-bottom: 5px;
+        }
+        #messageBox p {
+            font-size: 0.8em;
+            margin: 0;
+        }
+
+        /* 角色選擇容器: 2x2 Grid Layout (保持不變) */
+        #selection-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 兩列等寬 */
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+            width: 90%;
+            max-width: 250px; 
+        }
+        
+        /* 角色卡片樣式 (保持不變) */
+        .cannon-card {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+            background-color: #34495e;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            width: 100%; 
+            box-sizing: border-box;
+        }
+        .cannon-card:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+            transform: translateY(-2px);
+        }
+        .cannon-card.selected {
+            border-color: #f1c40f;
+            transform: scale(1.05);
+        }
+        .cannon-card img {
+            width: 45px;
+            height: 45px;
+            border-radius: 4px;
+        }
+        .cannon-card p {
+            font-size: 0.7em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* 開始/重新開始按鈕 (保持不變) */
+        #startRestartButton {
+            padding: 8px 15px; 
+            font-size: 0.8em; 
+            font-weight: bold;
+            color: white;
+            background-color: #e74c3c;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px #c0392b;
+            transition: background-color 0.1s, box-shadow 0.1s, transform 0.1s;
+        }
+        #startRestartButton:active {
+            box-shadow: 0 0;
+            transform: translateY(4px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 遊戲標題元素，用於在非遊戲狀態下顯示 -->
+    <div id="game-title">
+        <h1>LINGAMJIJI SHOOTER</h1>
+    </div>
+
+    <div id="game-container">
+        <!-- 畫布現在也作為輸入區域 -->
+        <canvas id="gameCanvas"></canvas>
+        
+        <!-- 大絕招按鈕疊加在畫布上 -->
+        <button id="superBombButton" class="bomb-button">
+            <span id="bombCount">B</span>
+        </button>
+
+        <div id="ui-panel">
+            <!-- 更改標籤為 SCR -->
+            <div class="game-info">SCR: <span id="scoreDisplay">0</span></div>
+            
+            <div class="game-info charge-info">
+                <!-- 更改標籤為 CHG -->
+                CHG: <span id="chargeBar" class="charge-bar-wrapper">
+                    <div id="chargeFill" class="charge-fill"></div>
+                </span>
+            </div>
+            
+            <!-- 更改標籤為 LVL -->
+            <div class="game-info">LVL: <span id="levelDisplay">1</span></div>
+            <div class="game-info life-indicators-wrapper">
+                <div id="livesContainer" class="life-indicators">
+                    <div id="life3" class="life-dot life-green"></div>
+                    <div id="life2" class="life-dot life-green"></div>
+                    <div id="life1" class="life-dot life-green"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="messageBox">
+            <h2 id="messageTitle"></h2>
+            <div id="selection-container"></div>
+            <p id="messageText"></p>
+            <button id="startRestartButton" class="control-button">START GAME</button>
+        </div>
+    </div>
+    
+    <script>
+        // =================================================================================
+        // 圖片自定義配置區塊
+        // =================================================================================
+        
+        // 砲台碰撞區域尺寸：70x70px
+        const CANNON_COLLISION_SIZE = 70;
+        // 遊戲內砲台圖片顯示尺寸：70x70px
+        const CANNON_DISPLAY_SIZE = 70;
+        
+        // 包含可選角色和隨機選項
+        const CANNONS_CONFIG = {
+            'cannon1': {
+                url: 'flyA.gif', // 更新為本地路徑
+                name: 'POMO',
+                image: new Image(),
+                type: 'selectable',
+                // --- Pomo (穿透) 特性 ---
+                bulletRadius: 4, 
+                fireRateMultiplier: 2.0, 
+                bulletColor: '#3498db', 
+                bulletDurability: 3, 
+                description: 'SLOW RATE, HIGH PIERCING',
+            },
+            'cannon2': {
+                url: 'flyB.gif', // 更新為本地路徑
+                name: 'ZHENGYUAN',
+                image: new Image(),
+                type: 'selectable',
+                // --- Zhengyuan (霰彈) 特性 ---
+                bulletRadius: 2.5, 
+                fireRateMultiplier: 1.0, 
+                bulletColor: '#e74c3c', 
+                description: 'STANDARD RATE, SCATTER SHOT',
+            },
+            'cannon3': {
+                url: 'flyC.gif', // 更新為本地路徑
+                name: 'FENGSHENG',
+                image: new Image(),
+                type: 'selectable',
+                // --- Fengsheng (連射) 特性 ---
+                bulletRadius: 4, 
+                fireRateMultiplier: 0.5, 
+                bulletColor: '#f1c40f', 
+                description: 'RAPID FIRE, STANDARD SHOT',
+            },
+            'random': {
+                // 使用佔位符圖片或預設繪製，此處用佔位符
+                url: 'https://placehold.co/70x70/3498db/FFFFFF?text=RANDOM',
+                name: 'RANDOM',
+                image: new Image(),
+                type: 'random',
+                description: 'RANDOM CANNON SELECTED',
+            }
+        };
+
+        let selectedCannonId = 'random'; // 預設選擇隨機
+        let cannonImage = CANNONS_CONFIG[selectedCannonId].image; // 當前使用的圖片物件
+        let currentCannonConfig = {}; // 存儲當前角色的配置
+        const BASE_AUTO_FIRE_INTERVAL = 200; // 基礎自動射擊間隔 (毫秒)
+
+        // 預載入所有圖片
+        Object.values(CANNONS_CONFIG).forEach(cannon => {
+            cannon.image.onload = () => { cannon.image.isLoaded = true; };
+            cannon.image.onerror = () => { console.error(`圖片載入失敗: ${cannon.name}`); cannon.image.isLoaded = false; };
+            cannon.image.src = cannon.url;
+        });
+
+
+        // =================================================================================
+        // 音效配置與預載入
+        // 提醒：請將路徑替換為您實際的音訊檔 URL
+        // =================================================================================
+        
+        const SFX_PATHS = {
+            LASER: 'audio/Laser.mp3',             // 射擊 (基礎檔，用來變速)
+            POP: 'audio/Pop.mp3',                 // 擊中/擊毀
+            HIT: 'audio/Hit.mp3',                 // 角色受傷
+            POWER_UP: 'audio/Power-Up.mp3',       // 充能完成
+            ULTIMATE_BOOM: 'audio/UltimateBoom.mp3'// 釋放大絕
+        };
+
+        const sfx = {};
+        for (const key in SFX_PATHS) {
+            sfx[key] = new Audio(SFX_PATHS[key]);
+            sfx[key].load();
+        }
+
+        /**
+         * 播放音效的通用函數，確保可以重複播放並設定參數。
+         * @param {HTMLAudioElement} audio 原始音訊元素
+         * @param {number} volume 音量 (0.0 - 1.0)
+         * @param {number} rate 播放速率 (例如 1.0, 0.8, 1.2)
+         */
+        function playSfx(audio, volume = 1.0, rate = 1.0) {
+            if (!audio) return;
+            // 使用 cloneNode 確保音效可以快速且重複播放
+            const clone = audio.cloneNode(true);
+            clone.volume = Math.min(1.0, Math.max(0.0, volume)); 
+            clone.playbackRate = rate;
+            // 嘗試播放，防止未經用戶互動被瀏覽器阻止
+            clone.play().catch(e => { /* 靜默處理自動播放失敗 */ });
+        }
+
+
+        // =================================================================================
+        // 全域常數與初始化
+        // =================================================================================
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const levelDisplay = document.getElementById('levelDisplay');
+        const messageBox = document.getElementById('messageBox');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const startRestartButton = document.getElementById('startRestartButton');
+        const selectionContainer = document.getElementById('selection-container');
+        const gameTitleElement = document.getElementById('game-title'); 
+        const bodyElement = document.body; 
+        const lifeDots = [
+            document.getElementById('life1'),
+            document.getElementById('life2'),
+            document.getElementById('life3')
+        ];
+        
+        // 🎯 大絕招系統相關 DOM 元素
+        const superBombButton = document.getElementById('superBombButton');
+        const bombCountDisplay = document.getElementById('bombCount');
+        const chargeFill = document.getElementById('chargeFill');
+
+        // 黴菌顏色配置 (已更新為八種不同顏色)
+        const MOLD_COLORS = {
+            'normal': '#3c6e71',    // 墨綠色 (基礎)
+            'lively': '#fca311',    // 橙黃色 (活潑)
+            'fast': '#e74c3c',      // 亮紅色 (疾速)
+            'dashing': '#5d5d5a',   // 灰黑色 (衝刺)
+            'armored': {            // 裝甲黴菌 (兩種顏色)
+                full: '#55a630',    // 森林綠 (滿血)
+                hit: '#76c893'      // 淺綠 (受損)
+            },
+            'weaving': '#d5bdaf',   // 米黃色 (編織)
+            'sturdy': '#8e7a00',    // 深土黃色 (堅固)
+            'huge': '#7a5a8f'       // 紫羅蘭色 (巨大)
+        };
+        const MOLD_NORMAL_RADIUS = 15;
+        const MOLD_BASE_SPEED = 0.8;
+        
+        // 遊戲狀態變數
+        let cannon = {};
+        let bullets = [];
+        let mold = [];
+        let score = 0;
+        let lives = 3;
+        let isGameOver = false;
+        let isGameStarted = false;
+        let gameLoopRunning = false;
+        let lastMoldSpawnTime = 0;
+        let moldSpawnInterval = 1000;
+        let moldSpeed = MOLD_BASE_SPEED;
+        
+        // 🎯 大絕招系統狀態
+        let superBombCharge = 0;
+        let superBombs = 0;
+        const CHARGE_THRESHOLD = 1000;
+        let isSuperExploding = false;
+        let superExplosionStartTime = 0; // 爆炸開始時間
+        const SUPER_EXPLOSION_DURATION = 1000; // 爆炸視覺和震動持續時間 1000ms
+        const SUPER_SHAKE_INTENSITY = 10; // 爆炸震動強度
+        
+        // 玩家輸入狀態
+        let leftPressed = false;
+        let rightPressed = false;
+
+        // 自動射擊狀態
+        let autoFireInterval = BASE_AUTO_FIRE_INTERVAL;
+        let lastFireTime = 0;
+        
+        // 擊中效果狀態
+        let explosions = [];
+
+        // 傷害視覺效果狀態
+        let damageEffectActive = false;
+        const DAMAGE_DURATION = 300;
+        let damageStartTime = 0;
+        
+        // 難度控制變數
+        let difficultyLevel = 1;
+        const DIFFICULTY_STEP_SCORE = 120;
+        let nextDifficultyScore = DIFFICULTY_STEP_SCORE;
+        const DIFFICULTY_FACTOR = 1.1;
+        
+        // 黴菌生成輪替邏輯 (已擴展至 8 種)
+        let moldTypeCounter = 0;
+        const MOLD_TYPES_SEQUENCE = [
+            'normal', 'fast', 'lively', 'normal', 
+            'armored', 'dashing', 'sturdy', 'huge', 
+            'weaving', 'normal'
+        ];
+
+        // ----------------------------------------------------
+        // 輔助函數: 根據等級計算背景顏色 (從深藍到白)
+        // ----------------------------------------------------
+        function getBackgroundColor(level) {
+            const maxLevelForColor = 100;
+            const progress = Math.min(1, (level - 1) / (maxLevelForColor - 1));
+            // 從 #2c3e50 (44, 62, 80) 逐漸過渡到白色 (255, 255, 255)
+            const r = Math.floor(44 + (255 - 44) * progress);
+            const g = Math.floor(62 + (255 - 62) * progress);
+            const b = Math.floor(80 + (255 - 80) * progress);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // ----------------------------------------------------
+        // 輔助函數: 創建不同類型的黴菌 (包含 4 種新類型)
+        // ----------------------------------------------------
+        function createMold(type, baseSpeed) {
+            let m = {
+                x: Math.random() * (canvas.width - MOLD_NORMAL_RADIUS * 2) + MOLD_NORMAL_RADIUS,
+                y: -MOLD_NORMAL_RADIUS,
+                radius: MOLD_NORMAL_RADIUS,
+                type: type,
+                health: 1,
+                ySpeed: baseSpeed,
+                hSpeed: 0,
+                color: MOLD_COLORS[type] || MOLD_COLORS['normal'], // 使用新的顏色配置
+                dashTimer: 0,
+                isDashing: false,
+                dashInterval: 3000 * (1 / baseSpeed),
+                normalRadius: MOLD_NORMAL_RADIUS,
+                isHit: false,
+                hitTimer: 0,
+            };
+
+            switch (type) {
+                case 'huge':
+                    m.health = 12;
+                    m.maxRadius = 25;
+                    m.medRadius = 20;
+                    m.radius = m.maxRadius;
+                    m.ySpeed = baseSpeed / 3;
+                    m.x = Math.random() * (canvas.width - m.radius * 2) + m.radius;
+                    m.color = MOLD_COLORS['huge'];
+                    break;
+                case 'lively':
+                    m.hSpeed = 1.5 * (Math.random() > 0.5 ? 1 : -1);
+                    m.color = MOLD_COLORS['lively'];
+                    break;
+                case 'dashing':
+                    m.dashTimer = m.dashInterval + Math.random() * 1500;
+                    m.color = MOLD_COLORS['dashing'];
+                    break;
+                case 'fast': // 疾速黴菌 (25分)
+                    m.ySpeed = baseSpeed * 2.0;
+                    m.color = MOLD_COLORS['fast'];
+                    break;
+                case 'armored': // 裝甲黴菌 (30分)
+                    m.health = 2;
+                    m.armoredColor = MOLD_COLORS['armored'].full; // 森林綠 (滿血)
+                    m.unarmoredColor = MOLD_COLORS['armored'].hit; // 淺綠 (受損)
+                    m.color = m.armoredColor;
+                    break;
+                case 'weaving': // 編織黴菌 (35分)
+                    m.hSpeed = 1.0 * (Math.random() > 0.5 ? 1 : -1);
+                    m.weaveTimer = 1000; // 每 1000ms 改變一次方向
+                    m.color = MOLD_COLORS['weaving'];
+                    break;
+                case 'sturdy': // 堅固黴菌 (40分)
+                    m.health = 6;
+                    m.ySpeed = baseSpeed * 0.5;
+                    m.color = MOLD_COLORS['sturdy'];
+                    break;
+                case 'normal':
+                default:
+                    m.color = MOLD_COLORS['normal'];
+                    break;
+            }
+            return m;
+        }
+        
+        // 確保畫布尺寸適應容器
+        function resizeCanvas() {
+            const container = document.getElementById('game-container');
+            
+            // 🎯 獲取由 CSS 設置的客戶端尺寸
+            const clientWidth = container.clientWidth;
+            const canvasElement = document.getElementById('gameCanvas');
+            const clientHeight = canvasElement.clientHeight;
+
+            // 設置畫布的繪圖尺寸
+            canvasElement.width = clientWidth;
+            canvasElement.height = clientHeight;
+
+            // 調整砲台位置
+            if (cannon.x !== undefined) {
+                cannon.x = Math.max(0, Math.min(cannon.x, canvasElement.width - cannon.width));
+                cannon.y = canvasElement.height - CANNON_COLLISION_SIZE - 10;
+            } else {
+                cannon.width = CANNON_COLLISION_SIZE;
+                cannon.height = CANNON_COLLISION_SIZE;
+                cannon.imgWidth = CANNON_DISPLAY_SIZE;
+                cannon.imgHeight = CANNON_DISPLAY_SIZE;
+                cannon.x = canvasElement.width / 2 - (CANNON_COLLISION_SIZE / 2);
+                cannon.y = canvasElement.height - CANNON_COLLISION_SIZE - 10;
+                cannon.speed = 6;
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // ----------------------------------------------------
+        // 介面更新
+        // ----------------------------------------------------
+
+        function updateLivesDisplay() {
+            playSfx(sfx.HIT, 0.8, 1.0); // 播放受傷音效
+
+            lifeDots.forEach((dot, index) => {
+                dot.className = 'life-dot'; // 重置樣式
+                if (index < lives) {
+                    // 根據生命值設置顏色
+                    if (lives === 3) dot.classList.add('life-green');
+                    else if (lives === 2) dot.classList.add('life-yellow');
+                    else dot.classList.add('life-red');
+                } else {
+                    dot.classList.add('life-grey'); // 失去的生命值顯示灰色
+                }
+            });
+        }
+        
+        function updateChargeDisplay() {
+            const ratio = superBombs === 0 ? superBombCharge / CHARGE_THRESHOLD : 1; // 充滿時顯示 100%
+            chargeFill.style.width = `${ratio * 100}%`;
+
+            if (superBombs > 0) {
+                superBombButton.classList.add('ready');
+                bombCountDisplay.textContent = 'B'; 
+            } else {
+                superBombButton.classList.remove('ready');
+                bombCountDisplay.textContent = '0';
+            }
+        }
+        
+        function updateScore(points) {
+            const previousSuperBombs = superBombs;
+            
+            score += points;
+            scoreDisplay.textContent = score;
+
+            // 🎯 續能邏輯：只有當前沒有大炸彈時才累積點數
+            if (superBombs < 1) {
+                superBombCharge += points;
+                if (superBombCharge >= CHARGE_THRESHOLD) {
+                    superBombs = 1;
+                    superBombCharge = CHARGE_THRESHOLD; // 充滿後鎖定在門檻值
+                }
+            }
+            
+            // 播放充能完成音效
+            if (superBombs > previousSuperBombs) {
+                 playSfx(sfx.POWER_UP, 1.0, 1.0); 
+            }
+            
+            updateChargeDisplay();
+
+            // 檢查是否升級
+            if (score >= nextDifficultyScore) {
+                difficultyLevel++;
+                levelDisplay.textContent = difficultyLevel;
+                // 加速黴菌生成和移動速度
+                moldSpawnInterval = Math.max(200, moldSpawnInterval * 0.9); // 最小間隔 200ms
+                moldSpeed = MOLD_BASE_SPEED * Math.pow(DIFFICULTY_FACTOR, difficultyLevel - 1);
+                
+                // 調整下一級所需分數
+                nextDifficultyScore = Math.ceil(nextDifficultyScore * 1.5);
+            }
+        }
+
+        // ----------------------------------------------------
+        // 遊戲流程控制
+        // ----------------------------------------------------
+        
+        function selectRandomCannon() {
+            const selectableIds = Object.keys(CANNONS_CONFIG).filter(id => CANNONS_CONFIG[id].type === 'selectable');
+            const randomId = selectableIds[Math.floor(Math.random() * selectableIds.length)];
+            return randomId;
+        }
+
+        function startGame() {
+            // 1. 處理隨機選擇
+            let finalCannonId = selectedCannonId;
+            if (finalCannonId === 'random') {
+                finalCannonId = selectRandomCannon();
+            }
+            
+            // 2. 應用角色配置
+            currentCannonConfig = CANNONS_CONFIG[finalCannonId];
+            cannonImage = currentCannonConfig.image;
+            if (!cannonImage.isLoaded) {
+                 console.warn(`Warning: Cannon image for ${currentCannonConfig.name} is not loaded.`);
+            }
+
+            autoFireInterval = BASE_AUTO_FIRE_INTERVAL * currentCannonConfig.fireRateMultiplier;
+            
+            // 3. 嘗試播放一次聲音以解鎖瀏覽器音訊
+            playSfx(sfx.LASER, 0.0);
+            
+            // 4. 初始化遊戲狀態
+            initGame();
+            
+            isGameStarted = true;
+            messageBox.style.display = 'none';
+
+            // 隱藏標題，將 body 頂部對齊，最大化遊戲畫布空間
+            gameTitleElement.style.display = 'none';
+            bodyElement.classList.add('game-active');
+            
+            // 重新調整尺寸以適應標題隱藏後的空間變化
+            resizeCanvas();
+
+            if (!gameLoopRunning) {
+                gameLoopRunning = true;
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function showGameOver(title, message) {
+            isGameOver = true;
+            gameLoopRunning = false;
+            
+            messageTitle.textContent = title;
+            messageText.innerHTML = `${message}<br>${score} MOLD PURIFIED!`; // Final Score message adjusted
+            selectionContainer.innerHTML = ''; // 清除選擇介面
+            startRestartButton.textContent = 'RESTART'; // Restart button
+            messageBox.style.display = 'flex';
+            
+            // 顯示標題，將 body 內容居中
+            gameTitleElement.style.display = 'block';
+            bodyElement.classList.remove('game-active');
+        }
+        
+        // ----------------------------------------------------
+        // 大絕招邏輯
+        // ----------------------------------------------------
+
+        function fireSuperBomb() {
+            if (superBombs < 1 || isGameOver) return;
+            
+            playSfx(sfx.ULTIMATE_BOOM, 1.0, 1.0); // 播放大絕音效
+
+            // 1. 清空所有黴菌和子彈
+            const moldsCleared = mold.length;
+            mold = [];
+            bullets = [];
+            
+            // 2. 應用分數獎勵
+            // 每個清除的黴菌給予 20 額外分數
+            const bonusScore = moldsCleared * 20; 
+            updateScore(bonusScore); 
+
+            // 3. 觸發超大爆炸視覺和震動效果
+            isSuperExploding = true;
+            superExplosionStartTime = performance.now(); // 記錄開始時間
+            
+            // 4. 重置狀態
+            superBombs = 0;
+            superBombCharge = 0;
+            updateChargeDisplay();
+        }
+
+        // ----------------------------------------------------
+        // 遊戲輸入處理
+        // ----------------------------------------------------
+
+        function handleInput() {
+            if (isGameStarted && !isGameOver) {
+                const step = cannon.speed;
+                if (leftPressed) {
+                    cannon.x = Math.max(0, cannon.x - step);
+                }
+                if (rightPressed) {
+                    cannon.x = Math.min(canvas.width - cannon.width, cannon.x + step);
+                }
+            }
+        }
+        
+        function handleCanvasControl(e) {
+            if (messageBox.style.display !== 'none' || !isGameStarted || isGameOver) return;
+            
+            let clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+            if (e.touches) e.preventDefault(); // 阻止移動端預設行為
+            
+            const rect = canvas.getBoundingClientRect();
+            const touchX = clientX - rect.left; 
+            
+            if (touchX < canvas.width / 2) {
+                leftPressed = true;
+                rightPressed = false;
+            } else {
+                rightPressed = true;
+                leftPressed = false;
+            }
+        }
+        
+        function stopMovement() {
+            leftPressed = false;
+            rightPressed = false;
+        }
+
+        // 註冊畫布事件監聽器
+        canvas.addEventListener('mousedown', handleCanvasControl);
+        canvas.addEventListener('touchstart', handleCanvasControl, { passive: false }); 
+        canvas.addEventListener('mouseup', stopMovement);
+        canvas.addEventListener('touchend', stopMovement);
+        canvas.addEventListener('mouseleave', stopMovement); 
+        
+        // 註冊大絕招按鈕事件
+        superBombButton.addEventListener('click', fireSuperBomb);
+        
+        // 鍵盤事件
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                leftPressed = true;
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                rightPressed = true;
+            } else if ((e.key === ' ' || e.key === 'Enter') && superBombs > 0) {
+                fireSuperBomb();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                leftPressed = false;
+            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                rightPressed = false;
+            }
+        });
+
+        // 開始/重新開始按鈕事件
+        startRestartButton.addEventListener('click', () => {
+            if (isGameStarted && isGameOver) {
+                initGame();
+                showCharacterSelection();
+            } else if (!isGameStarted) {
+                startGame();
+            }
+        });
+
+        // ----------------------------------------------------
+        // 射擊、更新、碰撞邏輯 
+        // ----------------------------------------------------
+        
+        function getCannonShotRate(cannonName) {
+            if (cannonName === 'POMO') return 0.8; 
+            if (cannonName === 'FENGSHENG') return 1.2;
+            return 1.0; 
+        }
+
+        function fireBullet() {
+            const { bulletRadius, bulletColor, bulletDurability, name } = currentCannonConfig;
+            
+            // 播放射擊音效，並根據機體類型調整播放速率
+            playSfx(sfx.LASER, 0.5, getCannonShotRate(name));
+
+            if (name === 'POMO') {
+                bullets.push({
+                    x: cannon.x + cannon.width / 2,
+                    y: cannon.y,
+                    radius: bulletRadius,
+                    color: bulletColor,
+                    durability: bulletDurability,
+                    type: 'pomo', 
+                    hSpeed: 0
+                });
+            } else if (name === 'ZHENGYUAN') {
+                for (let i = -1; i <= 1; i++) {
+                    bullets.push({
+                        x: cannon.x + cannon.width / 2 + i * 5, 
+                        y: cannon.y,
+                        radius: bulletRadius,
+                        color: bulletColor,
+                        durability: 1, 
+                        type: 'zhengyuan',
+                        hSpeed: i * 0.5
+                    });
+                }
+            } else {
+                 bullets.push({
+                    x: cannon.x + cannon.width / 2,
+                    y: cannon.y,
+                    radius: bulletRadius,
+                    color: bulletColor,
+                    durability: 1,
+                    type: 'normal',
+                    hSpeed: 0
+                });
+            }
+        }
+
+        function updateGame(deltaTime) {
+            const now = performance.now();
+
+            handleInput();
+
+            if (now - lastFireTime > autoFireInterval) {
+                fireBullet();
+                lastFireTime = now;
+            }
+
+            bullets = bullets.filter(bullet => {
+                bullet.y -= 8;
+                bullet.x += bullet.hSpeed || 0;
+                return bullet.y + bullet.radius > 0;
+            });
+
+            updateMolds(deltaTime, now);
+            
+            if (now - lastMoldSpawnTime > moldSpawnInterval) {
+                const type = MOLD_TYPES_SEQUENCE[moldTypeCounter % MOLD_TYPES_SEQUENCE.length];
+                mold.push(createMold(type, moldSpeed));
+                moldTypeCounter++;
+                lastMoldSpawnTime = now;
+            }
+            
+            checkCollisions(deltaTime);
+            updateExplosions(deltaTime);
+
+            if (lives <= 0) {
+                // English Game Over messages
+                showGameOver('ENERGY DEPLETED', 'CONGRATULATIONS, YOU HAVE PURIFIED');
+            }
+        }
+        
+        function updateMolds(deltaTime, now) {
+            mold = mold.filter(m => {
+                m.y += m.ySpeed;
+
+                if (m.type === 'lively') {
+                    m.x += m.hSpeed;
+                    if (m.x - m.radius < 0 || m.x + m.radius > canvas.width) m.hSpeed *= -1;
+                } else if (m.type === 'weaving') {
+                    if (now - m.weaveTimer > 1000) {
+                        m.hSpeed *= -1;
+                        m.weaveTimer = now;
+                    }
+                    m.x += m.hSpeed;
+                    if (m.x - m.radius < 0) { m.x = m.radius; m.hSpeed = Math.abs(m.hSpeed); }
+                    if (m.x + m.radius > canvas.width) { m.x = canvas.width - m.radius; m.hSpeed = -Math.abs(m.hSpeed); }
+                } else if (m.type === 'dashing') {
+                    m.dashTimer -= deltaTime;
+                    if (m.dashTimer < 0 && !m.isDashing) {
+                        m.isDashing = true;
+                        m.dashTimer = 500; 
+                    }
+                    if (m.isDashing) {
+                        m.y += m.ySpeed * 5; 
+                        m.dashTimer -= deltaTime;
+                        if (m.dashTimer <= 0) {
+                            m.isDashing = false;
+                            m.dashTimer = m.dashInterval + Math.random() * 1500;
+                        }
+                    }
+                }
+
+                if (m.isHit) {
+                    m.hitTimer -= deltaTime;
+                    if (m.hitTimer <= 0) m.isHit = false;
+                }
+
+                if (m.y - m.radius > canvas.height) return false; 
+
+                // 碰撞檢測 - 角色
+                if (
+                    m.y + m.radius >= cannon.y && m.y - m.radius <= cannon.y + cannon.height &&
+                    m.x + m.radius >= cannon.x && m.x - m.radius <= cannon.x + cannon.width
+                ) {
+                    lives--;
+                    updateLivesDisplay();
+                    triggerDamageEffect(now);
+                    createExplosion(m.x, m.y, m.radius, m.color);
+                    return false; 
+                }
+
+                return true;
+            });
+        }
+        
+        function checkCollisions(deltaTime) {
+            const nextBullets = [];
+            const moldsToKeep = [];
+
+            mold.forEach(m => {
+                let moldHitThisFrame = false; // 用於避免重複播放擊中音效
+
+                bullets.forEach(b => {
+                    const dx = b.x - m.x;
+                    const dy = b.y - m.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < b.radius + m.radius) {
+                        
+                        let damage = (b.type === 'pomo' && m.type === 'huge') ? 3 : 1;
+                        const healthBeforeHit = m.health;
+                        
+                        m.health -= damage;
+                        m.isHit = true;
+                        m.hitTimer = 100;
+                        moldHitThisFrame = true; // 標記被擊中
+
+                        if (m.type === 'armored' && m.health === 1) m.color = m.unarmoredColor;
+
+                        if (m.type === 'huge') {
+                            if (m.health <= 4 && m.radius > m.normalRadius) m.radius = m.normalRadius;
+                            else if (m.health <= 8 && m.radius > m.medRadius) m.radius = m.medRadius;
+                        }
+                        
+                        if (m.health <= 0) {
+                            // 擊毀音效 (Pop.mp3, 正常播放)
+                            playSfx(sfx.POP, 0.7, 1.0); 
+                            
+                            let points = 10;
+                            switch (m.type) {
+                                case 'fast': points = 25; break;
+                                case 'armored': points = 30; break;
+                                case 'weaving': points = 35; break;
+                                case 'sturdy': points = 40; break;
+                                case 'huge': points = 50; break;
+                                case 'lively': points = 20; break;
+                                case 'dashing': points = 30; break;
+                                default: points = 10; break;
+                            }
+                            updateScore(points);
+                            createExplosion(m.x, m.y, m.radius, m.color);
+                        } else if (healthBeforeHit > 0) {
+                            // 擊中音效 (Pop.mp3, 快速高音)
+                            playSfx(sfx.POP, 0.3, 1.5); 
+                        }
+
+                        b.durability--;
+                    }
+                });
+
+                if (m.health > 0) moldsToKeep.push(m);
+            });
+            
+            bullets.forEach(b => {
+                if (b.durability > 0) nextBullets.push(b);
+            });
+
+            mold = moldsToKeep;
+            bullets = nextBullets;
+        }
+
+        // ----------------------------------------------------
+        // 視覺特效處理
+        // ----------------------------------------------------
+        
+        function createExplosion(x, y, radius, color) {
+            explosions.push({
+                x: x,
+                y: y,
+                radius: radius,
+                color: color,
+                maxRadius: radius * 3,
+                alpha: 1.0,
+                speed: 10
+            });
+        }
+
+        function updateExplosions(deltaTime) {
+            explosions = explosions.filter(exp => {
+                exp.radius += exp.speed * (deltaTime / 16.67);
+                exp.alpha -= 0.05 * (deltaTime / 16.67);
+                return exp.alpha > 0;
+            });
+        }
+        
+        function triggerDamageEffect(now) {
+            damageEffectActive = true;
+            damageStartTime = now;
+        }
+
+        function getShakeOffset(now) {
+            let shakeOffset = 0;
+            
+            // 1. 傷害震動
+            if (damageEffectActive) {
+                const elapsed = now - damageStartTime;
+                if (elapsed < DAMAGE_DURATION) {
+                    shakeOffset = 5 * (1 - elapsed / DAMAGE_DURATION);
+                } else {
+                    damageEffectActive = false;
+                }
+            }
+            
+            // 2. 爆炸震動 (覆蓋傷害震動)
+            if (isSuperExploding) {
+                const elapsed = now - superExplosionStartTime;
+                if (elapsed < SUPER_EXPLOSION_DURATION) {
+                    const progress = elapsed / SUPER_EXPLOSION_DURATION;
+                    // 從最大強度遞減
+                    shakeOffset = SUPER_SHAKE_INTENSITY * (1 - progress); 
+                } else {
+                    isSuperExploding = false; // 震動結束
+                }
+            }
+
+            return shakeOffset;
+        }
+        
+        // ----------------------------------------------------
+        // 繪圖邏輯
+        // ----------------------------------------------------
+
+        function drawGame() {
+            if (!gameLoopRunning && !isGameStarted) return;
+            
+            const now = performance.now();
+
+            ctx.fillStyle = getBackgroundColor(difficultyLevel);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 應用畫面震動效果
+            const currentShakeOffset = getShakeOffset(now);
+            const dx = currentShakeOffset > 0 ? Math.sin(now * 0.5) * currentShakeOffset : 0;
+            const dy = currentShakeOffset > 0 ? Math.cos(now * 0.5) * currentShakeOffset : 0;
+            ctx.save();
+            ctx.translate(dx, dy);
+
+            // 1. 繪製黴菌
+            mold.forEach(m => {
+                if (m.isHit && Math.floor(m.hitTimer / 50) % 2 === 0) {
+                    ctx.fillStyle = '#ecf0f1';
+                } else {
+                    ctx.fillStyle = m.color;
+                }
+                
+                ctx.beginPath();
+                ctx.arc(m.x, m.y, m.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                if (m.type === 'dashing' && !m.isDashing && m.dashTimer < 1000 && m.dashTimer > 0) {
+                    const alpha = (1000 - m.dashTimer) / 1000 * 0.5;
+                    ctx.fillStyle = `rgba(231, 76, 60, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(m.x, m.y, m.radius * 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                const maxHealth = (m.type === 'huge' ? 12 : (m.type === 'sturdy' ? 6 : (m.type === 'armored' ? 2 : 1)));
+                if (maxHealth > 1) {
+                    const healthRatio = m.health / maxHealth;
+                    const barWidth = m.radius * 2;
+                    const barHeight = 4;
+                    const barX = m.x - m.radius;
+                    const barY = m.y - m.radius - 8;
+                    
+                    ctx.fillStyle = '#7f8c8d';
+                    ctx.fillRect(barX, barY, barWidth, barHeight);
+                    ctx.fillStyle = healthRatio > 0.5 ? '#2ecc71' : (healthRatio > 0.25 ? '#f1c40f' : '#e74c3c');
+                    ctx.fillRect(barX, barY, barWidth * healthRatio, barHeight);
+                }
+            });
+
+            // 2. 繪製子彈
+            bullets.forEach(b => {
+                if (b.type === 'pomo') {
+                    const durabilityRatio = b.durability / currentCannonConfig.bulletDurability;
+                    ctx.fillStyle = `rgba(52, 152, 219, ${0.4 + durabilityRatio * 0.6})`;
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, b.radius * 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = 'white';
+                    ctx.font = '8px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(b.durability, b.x, b.y);
+                } else {
+                    ctx.fillStyle = b.color;
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            // 3. 繪製爆炸效果
+            explosions.forEach(exp => {
+                ctx.fillStyle = exp.color;
+                ctx.globalAlpha = exp.alpha;
+                ctx.beginPath();
+                ctx.arc(exp.x, exp.y, exp.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            });
+
+            // 4. 繪製砲台 (圖片)
+            if (cannonImage.isLoaded) {
+                ctx.drawImage(
+                    cannonImage,
+                    cannon.x,
+                    cannon.y,
+                    cannon.imgWidth,
+                    cannon.imgHeight
+                );
+            } else {
+                ctx.fillStyle = 'red';
+                ctx.fillRect(cannon.x, cannon.y, cannon.width, cannon.height);
+                ctx.fillStyle = 'white';
+                ctx.font = '10px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(currentCannonConfig.name, cannon.x + cannon.width / 2, cannon.y + cannon.height / 2);
+            }
+            
+            // 恢復畫布狀態
+            ctx.restore();
+            
+            // 5. 繪製超級爆炸效果
+            if (isSuperExploding) {
+                const elapsed = now - superExplosionStartTime;
+                const progress = elapsed / SUPER_EXPLOSION_DURATION;
+                
+                let radius = canvas.width * 0.8 * progress; 
+                let alpha = 1.0 - progress;
+
+                ctx.globalAlpha = Math.max(0, alpha * 0.9);
+                ctx.fillStyle = '#f39c12';
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+        }
+        
+        // ----------------------------------------------------
+        // 遊戲主循環
+        // ----------------------------------------------------
+        let lastTime = 0;
+
+        function gameLoop(currentTime) {
+            if (!gameLoopRunning) return;
+
+            const deltaTime = Math.min(currentTime - lastTime, 100); 
+            lastTime = currentTime;
+            
+            if (!isGameOver) {
+                updateGame(deltaTime);
+            }
+            drawGame();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ----------------------------------------------------
+        // 啟動點
+        // ----------------------------------------------------
+
+        // 確保在所有 DOM 元素載入後顯示選擇畫面
+        window.onload = function() {
+            resizeCanvas(); 
+            initGame();
+            showCharacterSelection();
+        };
+
+        // ----------------------------------------------------
+        // 角色選擇與畫面顯示 (使用英文)
+        // ----------------------------------------------------
+
+        function showCharacterSelection() {
+            selectionContainer.innerHTML = '';
+            messageTitle.textContent = 'SELECT YOUR CANNON'; // English Title
+            startRestartButton.textContent = 'START GAME'; // English Button
+            messageText.textContent = CANNONS_CONFIG[selectedCannonId].description || '';
+
+            Object.keys(CANNONS_CONFIG).forEach(id => {
+                const cannon = CANNONS_CONFIG[id];
+                const card = document.createElement('div');
+                card.id = `card-${id}`;
+                card.className = 'cannon-card';
+                
+                const img = document.createElement('img');
+                img.src = cannon.url;
+                img.width = CANNON_COLLISION_SIZE;
+                img.height = CANNON_COLLISION_SIZE;
+
+                const nameLabel = document.createElement('p');
+                nameLabel.textContent = cannon.name;
+
+                card.appendChild(img);
+                card.appendChild(nameLabel);
+                selectionContainer.appendChild(card);
+
+                card.addEventListener('click', () => selectCannon(id));
+            });
+            
+            selectCannon(selectedCannonId);
+            messageBox.style.display = 'flex';
+        }
+
+        function selectCannon(id) {
+            selectedCannonId = id;
+            document.querySelectorAll('.cannon-card').forEach(card => {
+                card.classList.remove('selected');
+                if (card.id === `card-${id}`) {
+                    card.classList.add('selected');
+                }
+            });
+            const selectedConfig = CANNONS_CONFIG[id];
+            messageText.textContent = selectedConfig.description;
+        }
+
+        function initGame() {
+            score = 0;
+            lives = 3;
+            isGameOver = false;
+            isGameStarted = false;
+            bullets = [];
+            mold = [];
+            explosions = [];
+            
+            difficultyLevel = 1;
+            nextDifficultyScore = DIFFICULTY_STEP_SCORE;
+            moldSpeed = MOLD_BASE_SPEED;
+            moldSpawnInterval = 1000;
+            
+            superBombCharge = 0;
+            superBombs = 0;
+            isSuperExploding = false;
+
+            gameTitleElement.style.display = 'block';
+            bodyElement.classList.remove('game-active');
+
+            resizeCanvas();
+
+            cannon.width = CANNON_COLLISION_SIZE;
+            cannon.height = CANNON_COLLISION_SIZE;
+            cannon.imgWidth = CANNON_DISPLAY_SIZE;
+            cannon.imgHeight = CANNON_DISPLAY_SIZE;
+            cannon.x = canvas.width / 2 - (CANNON_COLLISION_SIZE / 2);
+            cannon.y = canvas.height - CANNON_COLLISION_SIZE - 10;
+            cannon.speed = 6;
+            
+            scoreDisplay.textContent = score;
+            levelDisplay.textContent = difficultyLevel;
+
+            updateLivesDisplay();
+            updateChargeDisplay();
+            
+            requestAnimationFrame(drawGame);
+        }
+    </script>
+</body>
+</html>
