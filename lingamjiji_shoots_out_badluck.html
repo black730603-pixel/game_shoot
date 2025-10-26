@@ -10,8 +10,8 @@
         html, body {
             height: 100%; /* 確保 HTML 和 Body 佔滿整個視窗 */
             margin: 0;
-            padding: 0;
-            overflow: hidden; /* 防止滾動條 */
+            /* 🎯 確保內容不被系統 UI 遮擋 */
+            overflow: hidden; 
         }
         body {
             display: flex;
@@ -25,8 +25,10 @@
             color: #ecf0f1;
             box-sizing: border-box;
             
-            /* 🎯 核心修正：將所有內容推到安全區上方 */
-            padding-bottom: env(safe-area-inset-bottom, 0px); 
+            /* 🎯 核心修正：將所有邊界空間和安全區都設定在 body padding */
+            padding-top: 5px; /* 模擬原先 game-container 的頂部 5px margin */
+            /* 20px 固定緩衝 + 系統安全區，確保清空瀏覽器地址欄空間 */
+            padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); 
         }
         
         /* 遊戲狀態下的 body 樣式調整，讓內容更靠頂部 */
@@ -55,16 +57,15 @@
             background-color: #34495e;
             position: relative;
             
-            /* 關鍵改動：使其成為垂直 Flex 容器並佔滿剩餘高度 */
+            /* 關鍵改動：移除 margin，使用 body padding 控制邊距 */
+            margin: 0; 
+            
+            /* 關鍵改動：使用 100% height 佔滿 body 內剩餘空間 */
             display: flex;
             flex-direction: column;
             flex-grow: 1; 
-            
-            /* 極小的周圍邊界 */
-            margin: 5px; 
-            
-            /* 最大高度應扣除 body 的頂部和底部 padding/margin */
-            max-height: calc(100vh - 10px - env(safe-area-inset-bottom, 0px)); 
+            height: 100%;
+            max-height: 100%; 
         }
 
         #gameCanvas {
@@ -150,7 +151,7 @@
         #superBombButton {
             position: absolute;
             /* 放置在畫布的右下方，讓開砲台和底部 UI 面板 */
-            bottom: 75px; 
+            bottom: calc(75px + 10px); /* 10px 是 UI-Panel 的 padding-top/bottom */
             right: 15px;
             width: 45px;
             height: 45px;
