@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <!-- 關鍵修正：加入 viewport-fit=cover 以啟用安全區變數 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>LINGAMJIJI SHOOTER</title>
+    <title>靈根吉吉射爆霉運</title>
     <style>
         /* 使用 Tailwind 概念的自定義CSS讓遊戲看起來更美觀，並確保移動端友好 */
         html, body {
@@ -286,7 +286,7 @@
 
     <!-- 遊戲標題元素，用於在非遊戲狀態下顯示 -->
     <div id="game-title">
-        <h1>LINGAMJIJI SHOOTER</h1>
+        <h1>靈根吉吉射爆霉運</h1>
     </div>
 
     <div id="game-container">
@@ -304,13 +304,13 @@
             
             <div class="game-info charge-info">
                 <!-- 更改標籤為 CHG -->
-                CHG: <span id="chargeBar" class="charge-bar-wrapper">
+                    <span id="chargeBar" class="charge-bar-wrapper">
                     <div id="chargeFill" class="charge-fill"></div>
                 </span>
             </div>
             
             <!-- 更改標籤為 LVL -->
-            <div class="game-info">LVL: <span id="levelDisplay">1</span></div>
+            <div class="game-info">LV: <span id="levelDisplay">1</span></div>
             <div class="game-info life-indicators-wrapper">
                 <div id="livesContainer" class="life-indicators">
                     <div id="life3" class="life-dot life-green"></div>
@@ -342,7 +342,7 @@
         const CANNONS_CONFIG = {
             'cannon1': {
                 url: 'flyA.gif', // 更新為本地路徑
-                name: 'POMO',
+                name: '破魔',
                 image: new Image(),
                 type: 'selectable',
                 // --- Pomo (穿透) 特性 ---
@@ -350,37 +350,37 @@
                 fireRateMultiplier: 2.0, 
                 bulletColor: '#3498db', 
                 bulletDurability: 9, 
-                description: 'SLOW RATE, HIGH PIERCING',
+                description: '慢速重砲',
             },
             'cannon2': {
                 url: 'flyB.gif', // 更新為本地路徑
-                name: 'ZHENGYUAN',
+                name: '正緣',
                 image: new Image(),
                 type: 'selectable',
                 // --- Zhengyuan (霰彈) 特性 ---
                 bulletRadius: 2, 
                 fireRateMultiplier: 1.0, 
                 bulletColor: '#e74c3c', 
-                description: 'STANDARD RATE, SCATTER SHOT',
+                description: '中速霰彈',
             },
             'cannon3': {
                 url: 'flyC.gif', // 更新為本地路徑
-                name: 'FENGSHENG',
+                name: '豐盛',
                 image: new Image(),
                 type: 'selectable',
                 // --- Fengsheng (連射) 特性 ---
                 bulletRadius: 4, 
                 fireRateMultiplier: 0.5, 
                 bulletColor: '#f1c40f', 
-                description: 'RAPID FIRE, STANDARD SHOT',
+                description: '快速普彈',
             },
             'random': {
                 // 使用佔位符圖片或預設繪製，此處用佔位符
                 url: 'https://placehold.co/70x70/3498db/FFFFFF?text=RANDOM',
-                name: 'RANDOM',
+                name: '隨機',
                 image: new Image(),
                 type: 'random',
-                description: 'RANDOM CANNON SELECTED',
+                description: '濕婆大天決定',
             }
         };
 
@@ -759,7 +759,7 @@
             gameLoopRunning = false;
             
             messageTitle.textContent = title;
-            messageText.innerHTML = `${message}<br>${score} MOLD PURIFIED!`; // Final Score message adjusted
+            messageText.innerHTML = `${message}<br>${score} 個霉運！`; // Final Score message adjusted
             selectionContainer.innerHTML = ''; // 清除選擇介面
             startRestartButton.textContent = 'RESTART'; // Restart button
             messageBox.style.display = 'flex';
@@ -957,7 +957,7 @@
 
             if (lives <= 0) {
                 // English Game Over messages
-                showGameOver('ENERGY DEPLETED', 'CONGRATULATIONS, YOU HAVE PURIFIED');
+                showGameOver('靈根能量已用罄', '恭喜您，已經淨化了');
             }
         }
         
@@ -1298,8 +1298,8 @@
 
         function showCharacterSelection() {
             selectionContainer.innerHTML = '';
-            messageTitle.textContent = 'SELECT YOUR CANNON'; // English Title
-            startRestartButton.textContent = 'START GAME'; // English Button
+            messageTitle.textContent = '選擇您的靈根'; // English Title
+            startRestartButton.textContent = '射爆霉運'; // English Button
             messageText.textContent = CANNONS_CONFIG[selectedCannonId].description || '';
 
             Object.keys(CANNONS_CONFIG).forEach(id => {
