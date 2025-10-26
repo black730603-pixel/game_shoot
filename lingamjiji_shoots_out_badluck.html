@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 關鍵修正：加入 viewport-fit=cover 以啟用安全區變數 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>LINGAMJIJI SHOOTER</title>
     <style>
         /* 使用 Tailwind 概念的自定義CSS讓遊戲看起來更美觀，並確保移動端友好 */
@@ -23,6 +24,9 @@
             font-family: 'Inter', sans-serif;
             color: #ecf0f1;
             box-sizing: border-box;
+            
+            /* 🎯 核心修正：將所有內容推到安全區上方 */
+            padding-bottom: env(safe-area-inset-bottom, 0px); 
         }
         
         /* 遊戲狀態下的 body 樣式調整，讓內容更靠頂部 */
@@ -59,8 +63,8 @@
             /* 極小的周圍邊界 */
             margin: 5px; 
             
-            /* 計算最大高度：100vh - 5px (上邊界) - 5px (下邊界) - title高度(由JS控制) */
-            max-height: calc(100vh - 10px); 
+            /* 最大高度應扣除 body 的頂部和底部 padding/margin */
+            max-height: calc(100vh - 10px - env(safe-area-inset-bottom, 0px)); 
         }
 
         #gameCanvas {
