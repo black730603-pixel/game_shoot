@@ -393,7 +393,7 @@
                 name: '隨機',
                 image: new Image(),
                 type: 'random',
-                description: '由濕婆決定命運',
+                description: '濕婆決定',
             }
         };
 
@@ -905,7 +905,7 @@
             // 播放射擊音效，並根據機體類型調整播放速率
             playSfx(sfx.LASER, 0.5, getCannonShotRate(name));
 
-            if (name === 'POMO') {
+            if (name === '破魔') {
                 bullets.push({
                     x: cannon.x + cannon.width / 2,
                     y: cannon.y,
@@ -915,7 +915,7 @@
                     type: 'pomo', 
                     hSpeed: 0
                 });
-            } else if (name === 'ZHENGYUAN') {
+            } else if (name === '正緣') {
                 for (let i = -1; i <= 1; i++) {
                     bullets.push({
                         x: cannon.x + cannon.width / 2 + i * 5, 
