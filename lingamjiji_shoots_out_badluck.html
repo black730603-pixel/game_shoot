@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- 關鍵修正：加入 viewport-fit=cover 以啟用安全區變數 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>靈根吉吉射爆霉運</title>
+    <title>靈根吉吉開運好物製販所 2025年出品</title>
     <style>
         /* 使用 Tailwind 概念的自定義CSS讓遊戲看起來更美觀，並確保移動端友好 */
         html, body {
@@ -27,8 +26,8 @@
             
             /* 🎯 核心修正：將所有邊界空間和安全區都設定在 body padding */
             padding-top: 5px; /* 模擬原先 game-container 的頂部 5px margin */
-            /* 20px 固定緩衝 + 系統安全區，確保清空瀏覽器地址欄空間 */
-            padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); 
+            /* 調整 padding-bottom 以確保 footer 有空間，並考慮系統安全區 */
+            padding-bottom: env(safe-area-inset-bottom, 0px); 
         }
         
         /* 遊戲狀態下的 body 樣式調整，讓內容更靠頂部 */
@@ -280,36 +279,44 @@
             box-shadow: 0 0;
             transform: translateY(4px);
         }
+        
+        /* ------------------------------------- */
+        /* 底部版權資訊樣式 */
+        /* ------------------------------------- */
+        #game-footer {
+            flex-shrink: 0; /* 確保不被壓縮 */
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            font-size: 0.7em;
+            color: #7f8c8d; /* 淺灰色文字 */
+            padding: 10px 0 5px 0; /* 頂部間距和底部微小空間 */
+            user-select: none;
+        }
     </style>
 </head>
 <body>
 
-    <!-- 遊戲標題元素，用於在非遊戲狀態下顯示 -->
     <div id="game-title">
         <h1>靈根吉吉射爆霉運</h1>
     </div>
 
     <div id="game-container">
-        <!-- 畫布現在也作為輸入區域 -->
         <canvas id="gameCanvas"></canvas>
         
-        <!-- 大絕招按鈕疊加在畫布上 -->
         <button id="superBombButton" class="bomb-button">
             <span id="bombCount">B</span>
         </button>
 
         <div id="ui-panel">
-            <!-- 更改標籤為 SCR -->
             <div class="game-info">SCR: <span id="scoreDisplay">0</span></div>
             
             <div class="game-info charge-info">
-                <!-- 更改標籤為 CHG -->
-                    <span id="chargeBar" class="charge-bar-wrapper">
+                <span id="chargeBar" class="charge-bar-wrapper">
                     <div id="chargeFill" class="charge-fill"></div>
                 </span>
             </div>
             
-            <!-- 更改標籤為 LVL -->
             <div class="game-info">LV: <span id="levelDisplay">1</span></div>
             <div class="game-info life-indicators-wrapper">
                 <div id="livesContainer" class="life-indicators">
@@ -327,6 +334,10 @@
             <button id="startRestartButton" class="control-button">START GAME</button>
         </div>
     </div>
+    
+    <footer id="game-footer">
+        靈根吉吉開運好物製販所 2025年出品
+    </footer>
     
     <script>
         // =================================================================================
@@ -361,6 +372,7 @@
                 bulletRadius: 2, 
                 fireRateMultiplier: 1.0, 
                 bulletColor: '#e74c3c', 
+                bulletDurability: 1, 
                 description: '中速霰彈',
             },
             'cannon3': {
@@ -372,6 +384,7 @@
                 bulletRadius: 4, 
                 fireRateMultiplier: 0.5, 
                 bulletColor: '#f1c40f', 
+                bulletDurability: 1,
                 description: '快速普彈',
             },
             'random': {
@@ -380,7 +393,7 @@
                 name: '隨機',
                 image: new Image(),
                 type: 'random',
-                description: '濕婆大天決定',
+                description: '濕婆決定',
             }
         };
 
@@ -403,10 +416,10 @@
         // =================================================================================
         
         const SFX_PATHS = {
-            LASER: 'audio/Laser.mp3',             // 射擊 (基礎檔，用來變速)
-            POP: 'audio/Pop.mp3',                 // 擊中/擊毀
-            HIT: 'audio/Hit.mp3',                 // 角色受傷
-            POWER_UP: 'audio/Power-Up.mp3',       // 充能完成
+            LASER: 'audio/Laser.mp3', // 射擊 (基礎檔，用來變速)
+            POP: 'audio/Pop.mp3', // 擊中/擊毀
+            HIT: 'audio/Hit.mp3', // 角色受傷
+            POWER_UP: 'audio/Power-Up.mp3', // 充能完成
             ULTIMATE_BOOM: 'audio/UltimateBoom.mp3'// 釋放大絕
         };
 
@@ -461,17 +474,17 @@
 
         // 黴菌顏色配置 (已更新為八種不同顏色)
         const MOLD_COLORS = {
-            'normal': '#3c6e71',    // 墨綠色 (基礎)
-            'lively': '#fca311',    // 橙黃色 (活潑)
-            'fast': '#e74c3c',      // 亮紅色 (疾速)
-            'dashing': '#5d5d5a',   // 灰黑色 (衝刺)
-            'armored': {            // 裝甲黴菌 (兩種顏色)
-                full: '#55a630',    // 森林綠 (滿血)
-                hit: '#76c893'      // 淺綠 (受損)
+            'normal': '#3c6e71', // 墨綠色 (基礎)
+            'lively': '#fca311', // 橙黃色 (活潑)
+            'fast': '#e74c3c', // 亮紅色 (疾速)
+            'dashing': '#5d5d5a', // 灰黑色 (衝刺)
+            'armored': { // 裝甲黴菌 (兩種顏色)
+                full: '#55a630', // 森林綠 (滿血)
+                hit: '#76c893' // 淺綠 (受損)
             },
-            'weaving': '#d5bdaf',   // 米黃色 (編織)
-            'sturdy': '#8e7a00',    // 深土黃色 (堅固)
-            'huge': '#7a5a8f'       // 紫羅蘭色 (巨大)
+            'weaving': '#d5bdaf', // 米黃色 (編織)
+            'sturdy': '#8e7a00', // 深土黃色 (堅固)
+            'huge': '#7a5a8f' // 紫羅蘭色 (巨大)
         };
         const MOLD_NORMAL_RADIUS = 15;
         const MOLD_BASE_SPEED = 0.8;
@@ -761,7 +774,7 @@
             messageTitle.textContent = title;
             messageText.innerHTML = `${message}<br>${score} 個霉運！`; // Final Score message adjusted
             selectionContainer.innerHTML = ''; // 清除選擇介面
-            startRestartButton.textContent = 'RESTART'; // Restart button
+            startRestartButton.textContent = '重新開始'; // Restart button
             messageBox.style.display = 'flex';
             
             // 顯示標題，將 body 內容居中
@@ -892,7 +905,7 @@
             // 播放射擊音效，並根據機體類型調整播放速率
             playSfx(sfx.LASER, 0.5, getCannonShotRate(name));
 
-            if (name === 'POMO') {
+            if (name === '破魔') {
                 bullets.push({
                     x: cannon.x + cannon.width / 2,
                     y: cannon.y,
@@ -902,7 +915,7 @@
                     type: 'pomo', 
                     hSpeed: 0
                 });
-            } else if (name === 'ZHENGYUAN') {
+            } else if (name === '正緣') {
                 for (let i = -1; i <= 1; i++) {
                     bullets.push({
                         x: cannon.x + cannon.width / 2 + i * 5, 
@@ -1299,7 +1312,7 @@
         function showCharacterSelection() {
             selectionContainer.innerHTML = '';
             messageTitle.textContent = '選擇您的靈根'; // English Title
-            startRestartButton.textContent = '射爆霉運'; // English Button
+            startRestartButton.textContent = '出發'; // English Button
             messageText.textContent = CANNONS_CONFIG[selectedCannonId].description || '';
 
             Object.keys(CANNONS_CONFIG).forEach(id => {
