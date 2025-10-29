@@ -889,12 +889,14 @@
                 if (cannonCount === 1 && score >= CANNON_UPGRADE_THRESHOLD_1) {
                     cannonCount++;
                     nextCannonThreshold = CANNON_UPGRADE_THRESHOLD_2; // 下一個閾值到 20000
+                    playSfx(sfx.POWER_UP, 1.0, 1.0);
                     cannonCountDisplay.textContent = cannonCount;
                     console.log(`恭喜！靈根升級！目前擁有 ${cannonCount} 個炮台！`);
                     resizeCanvas();
                 } else if (cannonCount === 2 && score >= CANNON_UPGRADE_THRESHOLD_2) {
                     cannonCount++;
                     nextCannonThreshold = Infinity; // 達到上限，不再升級
+                    playSfx(sfx.POWER_UP, 1.0, 1.0);
                     cannonCountDisplay.textContent = cannonCount;
                     console.log(`恭喜！靈根升級！目前擁有 ${cannonCount} 個炮台！`);
                     resizeCanvas();
