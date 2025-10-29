@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>靈根吉吉開運好物製販所 2025年出品</title>
+    <title>靈根吉吉射爆霉運</title>
+    <!-- 引入 html2canvas 庫，用於將 HTML 元素轉換為圖片 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* 使用 Tailwind 概念的自定義CSS讓遊戲看起來更美觀，並確保移動端友好 */
         html, body {
@@ -49,7 +51,7 @@
 
         #game-container {
             width: 100%; /* 佔滿可用寬度 */
-            max-width: 600px; /* 限制最大寬度 */
+            max-width: 720px; /* 限制最大寬度 */
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
@@ -215,6 +217,29 @@
             font-size: 0.8em;
             margin: 0;
         }
+        
+        /* 額外為遊戲結束畫面添加戰績卡按鈕樣式 */
+        .control-button {
+            padding: 8px 15px; 
+            font-size: 0.8em; 
+            font-weight: bold;
+            color: white;
+            background-color: #e74c3c;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px #c0392b;
+            transition: background-color 0.1s, box-shadow 0.1s, transform 0.1s;
+            margin-top: 5px;
+        }
+        .control-button.secondary {
+             background-color: #3498db;
+             box-shadow: 0 4px #2980b9;
+        }
+        .control-button:active {
+            box-shadow: 0 0;
+            transform: translateY(4px);
+        }
 
         /* 角色選擇容器: 2x2 Grid Layout (保持不變) */
         #selection-container {
@@ -261,24 +286,6 @@
             font-weight: bold;
             margin-top: 5px;
         }
-
-        /* 開始/重新開始按鈕 (保持不變) */
-        #startRestartButton {
-            padding: 8px 15px; 
-            font-size: 0.8em; 
-            font-weight: bold;
-            color: white;
-            background-color: #e74c3c;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px #c0392b;
-            transition: background-color 0.1s, box-shadow 0.1s, transform 0.1s;
-        }
-        #startRestartButton:active {
-            box-shadow: 0 0;
-            transform: translateY(4px);
-        }
         
         /* ------------------------------------- */
         /* 底部版權資訊樣式 */
@@ -292,6 +299,84 @@
             color: #7f8c8d; /* 淺灰色文字 */
             padding: 10px 0 5px 0; /* 頂部間距和底部微小空間 */
             user-select: none;
+        }
+        
+        /* ------------------------------------- */
+        /* 🎯 戰績卡模板樣式 (用於生成圖片，必須是絕對尺寸，建議使用 px) */
+        /* ------------------------------------- */
+        #scoreCardTemplate {
+            position: absolute; /* 不佔用空間 */
+            left: -9999px; /* 移出視窗外 */
+            top: 0;
+            width: 400px; /* 固定寬度，適合 PNG 輸出 */
+            height: 600px; /* 固定高度 */
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); /* 漸變背景 */
+            color: #ecf0f1;
+            font-family: 'Inter', sans-serif;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            z-index: -100;
+        }
+        
+        #scoreCardTemplate .title {
+            font-size: 1.8em;
+            color: #f1c40f;
+            font-weight: 900;
+            text-shadow: 0 0 5px rgba(241, 196, 15, 0.8);
+            margin-bottom: 10px;
+        }
+        
+        #scoreCardTemplate #finalScore {
+            font-size: 6em; /* 超大字體分數 */
+            font-weight: bold;
+            color: #2ecc71; /* 綠色分數 */
+            text-shadow: 0 0 10px rgba(46, 204, 113, 0.7);
+            line-height: 1;
+            margin: 10px 0;
+        }
+        
+        #scoreCardTemplate #cannonImage {
+            width: 100px;
+            height: 100px;
+            border: 5px solid #bdc3c7;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+        
+        #scoreCardTemplate .details {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin: 5px 0;
+            color: #3498db;
+        }
+        
+        #scoreCardTemplate .slogan {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #e74c3c; /* 紅色口號 */
+            margin: 15px 0;
+        }
+        
+        #scoreCardTemplate .qr-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            margin-top: 15px;
+        }
+        
+        #scoreCardTemplate .qr-container p {
+            font-size: 0.7em;
+            color: #95a5a6;
+            margin: 0;
         }
     </style>
 </head>
@@ -317,7 +402,10 @@
                 </span>
             </div>
             
-            <div class="game-info">LV: <span id="levelDisplay">1</span></div>
+            <div class="game-info">
+                <!-- 顯示難度等級和當前炮台數量 -->
+                LV: <span id="levelDisplay">1</span> (x<span id="cannonCountDisplay">1</span>)
+            </div>
             <div class="game-info life-indicators-wrapper">
                 <div id="livesContainer" class="life-indicators">
                     <div id="life3" class="life-dot life-green"></div>
@@ -331,14 +419,49 @@
             <h2 id="messageTitle"></h2>
             <div id="selection-container"></div>
             <p id="messageText"></p>
-            <button id="startRestartButton" class="control-button">START GAME</button>
+            <!-- 戰績卡下載按鈕將會被插入在這裡 -->
+            <button id="startRestartButton" class="control-button">出發</button>
         </div>
     </div>
     
     <footer id="game-footer">
         靈根吉吉開運好物製販所 2025年出品
     </footer>
-    
+
+    <!-- 🎯 戰績卡圖片模板 - 隱藏在畫面之外，用於 html2canvas 處理 -->
+    <div id="scoreCardTemplate">
+        <div class="content-wrapper" style="flex-grow: 1; display: flex; flex-direction: column; align-items: center;">
+            <p style="font-size: 0.8em; color: #95a5a6; margin: 0;">— 戰績報告 —</p>
+            <h2 class="title">《靈根吉吉射爆霉運》</h2>
+
+            <img id="scoreCardCannonImage" src="" alt="戰機圖形" style="margin-top: 15px;" onerror="this.src='https://placehold.co/100x100/3498db/FFFFFF?text=Cannon+Image'" />
+            
+            <!-- 修正 1：戰機 -> 使用 -->
+            <p class="details" id="scoreCardCannonName">使用：XX靈根</p> 
+            <!-- 修正 2：等級：LV.1 -> 等級：1 -->
+            <p class="details" id="scoreCardLevel">等級：1</p>
+            <!-- 修正 3：火力稱號，將在 JS 中動態設定 -->
+            <p class="details" id="scoreCardCannonCount" style="font-size: 1em;">你是靈根吉吉挑戰者！</p>
+            
+            <div style="width: 100%; border-top: 2px dashed #95a5a6; margin: 15px 0;"></div>
+            
+            <!-- 修正 4：最終戰績 -> 消滅霉運 -->
+            <p style="font-size: 1.5em; font-weight: 300; margin: 0;">消滅霉運</p>
+            <div id="finalScore">0</div>
+            
+            <p class="slogan">「等你來挑戰！」</p>
+        </div>
+
+        <div class="qr-container">
+            <img id="scoreCardQrCode" 
+                 src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https%3A%2F%2Fblack730603-pixel.github.io%2Flingam_shooter%2F" 
+                 alt="QR Code" 
+                 width="100" 
+                 height="100" />
+            <p>掃描二維碼挑戰高分！</p>
+        </div>
+    </div>
+
     <script>
         // =================================================================================
         // 圖片自定義配置區塊
@@ -353,11 +476,11 @@
         const CANNONS_CONFIG = {
             'cannon1': {
                 url: 'flyA.gif', // 更新為本地路徑
-                name: '破魔',
+                name: '破魔靈根', // 更新名稱以符合戰績表格式
                 image: new Image(),
                 type: 'selectable',
                 // --- Pomo (穿透) 特性 ---
-                bulletRadius: 8, 
+                bulletRadius: 9, 
                 fireRateMultiplier: 2.0, 
                 bulletColor: '#3498db', 
                 bulletDurability: 9, 
@@ -365,7 +488,7 @@
             },
             'cannon2': {
                 url: 'flyB.gif', // 更新為本地路徑
-                name: '正緣',
+                name: '正緣靈根', // 更新名稱以符合戰績表格式
                 image: new Image(),
                 type: 'selectable',
                 // --- Zhengyuan (霰彈) 特性 ---
@@ -377,7 +500,7 @@
             },
             'cannon3': {
                 url: 'flyC.gif', // 更新為本地路徑
-                name: '豐盛',
+                name: '豐盛靈根', // 更新名稱以符合戰績表格式
                 image: new Image(),
                 type: 'selectable',
                 // --- Fengsheng (連射) 特性 ---
@@ -390,7 +513,7 @@
             'random': {
                 // 使用佔位符圖片或預設繪製，此處用佔位符
                 url: 'https://placehold.co/70x70/3498db/FFFFFF?text=RANDOM',
-                name: '隨機',
+                name: '隨機靈根',
                 image: new Image(),
                 type: 'random',
                 description: '濕婆決定',
@@ -401,7 +524,7 @@
         let cannonImage = CANNONS_CONFIG[selectedCannonId].image; // 當前使用的圖片物件
         let currentCannonConfig = {}; // 存儲當前角色的配置
         const BASE_AUTO_FIRE_INTERVAL = 200; // 基礎自動射擊間隔 (毫秒)
-
+        
         // 預載入所有圖片
         Object.values(CANNONS_CONFIG).forEach(cannon => {
             cannon.image.onload = () => { cannon.image.isLoaded = true; };
@@ -412,7 +535,6 @@
 
         // =================================================================================
         // 音效配置與預載入
-        // 提醒：請將路徑替換為您實際的音訊檔 URL
         // =================================================================================
         
         const SFX_PATHS = {
@@ -431,9 +553,6 @@
 
         /**
          * 播放音效的通用函數，確保可以重複播放並設定參數。
-         * @param {HTMLAudioElement} audio 原始音訊元素
-         * @param {number} volume 音量 (0.0 - 1.0)
-         * @param {number} rate 播放速率 (例如 1.0, 0.8, 1.2)
          */
         function playSfx(audio, volume = 1.0, rate = 1.0) {
             if (!audio) return;
@@ -461,6 +580,7 @@
         const selectionContainer = document.getElementById('selection-container');
         const gameTitleElement = document.getElementById('game-title'); 
         const bodyElement = document.body; 
+        const cannonCountDisplay = document.getElementById('cannonCountDisplay');
         const lifeDots = [
             document.getElementById('life1'),
             document.getElementById('life2'),
@@ -471,6 +591,28 @@
         const superBombButton = document.getElementById('superBombButton');
         const bombCountDisplay = document.getElementById('bombCount');
         const chargeFill = document.getElementById('chargeFill');
+        
+        // 🎯 戰績卡相關 DOM 元素
+        const scoreCardTemplate = document.getElementById('scoreCardTemplate');
+        
+        // 🎯 新增：炮台升級相關變數 (已更新為上限 3 個)
+        const CANNON_UPGRADE_THRESHOLD_1 = 10000;
+        const CANNON_UPGRADE_THRESHOLD_2 = 20000;
+        const MAX_CANNON_COUNT = 3; 
+
+        let nextCannonThreshold = CANNON_UPGRADE_THRESHOLD_1; 
+        let cannonCount = 1; // 玩家擁有的炮台數量
+        const CANNON_SPACING = CANNON_DISPLAY_SIZE + 10; // 炮台之間的間距
+        
+        // 🎯 難度隨分數增加（新的邏輯）
+        const SCORE_TIER_THRESHOLD = 10000;
+        const DIFFICULTY_HP_MULTIPLIER = 1.3;
+        const DIFFICULTY_SCORE_MULTIPLIER = 1.3;
+
+        let scoreTier = 0; // 0: 0-9999, 1: 10000-19999, 2: 20000-29999, etc.
+        let nextScoreTierThreshold = SCORE_TIER_THRESHOLD; // 10000
+        let currentHealthFactor = 1.0; // Health multiplier based on scoreTier
+        let currentScoreFactor = 1.0; // Score multiplier based on scoreTier
 
         // 黴菌顏色配置 (已更新為八種不同顏色)
         const MOLD_COLORS = {
@@ -490,7 +632,7 @@
         const MOLD_BASE_SPEED = 0.8;
         
         // 遊戲狀態變數
-        let cannon = {};
+        let cannon = {}; // 炮台現在代表整個編隊的中心點
         let bullets = [];
         let mold = [];
         let score = 0;
@@ -542,6 +684,35 @@
         ];
 
         // ----------------------------------------------------
+        // 輔助函數: 獲取炮台位置資訊
+        // ----------------------------------------------------
+        /**
+         * 根據當前炮台數量和編隊中心點 (cannon.x) 計算每個炮台的繪圖和中心位置。
+         * @returns {Array<{drawX: number, centerX: number}>} 每個炮台的位置陣列。
+         */
+        function getCannonPositions() {
+            const positions = [];
+            const num = cannonCount;
+            
+            // 計算總間距 (中心點到中心點的距離)
+            const totalSpacing = (num - 1) * CANNON_SPACING;
+            
+            // 左側第一個炮台的中心 X 座標
+            const startCenterX = cannon.x - totalSpacing / 2;
+            
+            for (let i = 0; i < num; i++) {
+                const individualCenterX = startCenterX + i * CANNON_SPACING;
+                // 繪圖 X 座標是左上角 (中心 X - 圖片半寬)
+                const individualDrawX = individualCenterX - cannon.imgWidth / 2;
+                positions.push({
+                    drawX: individualDrawX,
+                    centerX: individualCenterX
+                });
+            }
+            return positions;
+        }
+
+        // ----------------------------------------------------
         // 輔助函數: 根據等級計算背景顏色 (從深藍到白)
         // ----------------------------------------------------
         function getBackgroundColor(level) {
@@ -558,15 +729,17 @@
         // 輔助函數: 創建不同類型的黴菌 (包含 4 種新類型)
         // ----------------------------------------------------
         function createMold(type, baseSpeed) {
+            let baseHealth = 1;
+
             let m = {
                 x: Math.random() * (canvas.width - MOLD_NORMAL_RADIUS * 2) + MOLD_NORMAL_RADIUS,
                 y: -MOLD_NORMAL_RADIUS,
                 radius: MOLD_NORMAL_RADIUS,
                 type: type,
-                health: 1,
+                health: 1, 
                 ySpeed: baseSpeed,
                 hSpeed: 0,
-                color: MOLD_COLORS[type] || MOLD_COLORS['normal'], // 使用新的顏色配置
+                color: MOLD_COLORS[type] || MOLD_COLORS['normal'], 
                 dashTimer: 0,
                 isDashing: false,
                 dashInterval: 3000 * (1 / baseSpeed),
@@ -575,14 +748,14 @@
                 hitTimer: 0,
             };
 
+            // 1. 根據類型設定基礎屬性和顏色
             switch (type) {
                 case 'huge':
-                    m.health = 12;
+                    baseHealth = 12;
                     m.maxRadius = 25;
                     m.medRadius = 20;
                     m.radius = m.maxRadius;
                     m.ySpeed = baseSpeed / 3;
-                    m.x = Math.random() * (canvas.width - m.radius * 2) + m.radius;
                     m.color = MOLD_COLORS['huge'];
                     break;
                 case 'lively':
@@ -593,23 +766,23 @@
                     m.dashTimer = m.dashInterval + Math.random() * 1500;
                     m.color = MOLD_COLORS['dashing'];
                     break;
-                case 'fast': // 疾速黴菌 (25分)
+                case 'fast': 
                     m.ySpeed = baseSpeed * 2.0;
                     m.color = MOLD_COLORS['fast'];
                     break;
-                case 'armored': // 裝甲黴菌 (30分)
-                    m.health = 2;
-                    m.armoredColor = MOLD_COLORS['armored'].full; // 森林綠 (滿血)
-                    m.unarmoredColor = MOLD_COLORS['armored'].hit; // 淺綠 (受損)
+                case 'armored': 
+                    baseHealth = 2;
+                    m.armoredColor = MOLD_COLORS['armored'].full; 
+                    m.unarmoredColor = MOLD_COLORS['armored'].hit; 
                     m.color = m.armoredColor;
                     break;
-                case 'weaving': // 編織黴菌 (35分)
+                case 'weaving': 
                     m.hSpeed = 1.0 * (Math.random() > 0.5 ? 1 : -1);
-                    m.weaveTimer = 1000; // 每 1000ms 改變一次方向
+                    m.weaveTimer = 1000;
                     m.color = MOLD_COLORS['weaving'];
                     break;
-                case 'sturdy': // 堅固黴菌 (40分)
-                    m.health = 6;
+                case 'sturdy': 
+                    baseHealth = 6;
                     m.ySpeed = baseSpeed * 0.5;
                     m.color = MOLD_COLORS['sturdy'];
                     break;
@@ -618,6 +791,19 @@
                     m.color = MOLD_COLORS['normal'];
                     break;
             }
+
+            // 2. 🎯 應用難度分數等級的生命值乘數，並四捨五入
+            m.health = Math.round(baseHealth * currentHealthFactor);
+            // 確保最低生命值為 1
+            if (m.health < 1) m.health = 1; 
+            m.initialHealth = m.health; // 紀錄初始血量以便計算血條
+
+            // 3. 調整 Armored 類型，以應用新的 health 值
+            if (m.type === 'armored') {
+                // 裝甲顏色在血量大於 50% 時顯示，否則顯示受損顏色
+                m.armoredThreshold = Math.ceil(m.health / 2); 
+            }
+
             return m;
         }
         
@@ -635,17 +821,23 @@
             canvasElement.height = clientHeight;
 
             // 調整砲台位置
-            if (cannon.x !== undefined) {
-                cannon.x = Math.max(0, Math.min(cannon.x, canvasElement.width - cannon.width));
-                cannon.y = canvasElement.height - CANNON_COLLISION_SIZE - 10;
-            } else {
+            // 🎯 這裡將 cannon.x 定義為炮台編隊的中心 X 座標
+            if (cannon.x === undefined) {
                 cannon.width = CANNON_COLLISION_SIZE;
                 cannon.height = CANNON_COLLISION_SIZE;
                 cannon.imgWidth = CANNON_DISPLAY_SIZE;
                 cannon.imgHeight = CANNON_DISPLAY_SIZE;
-                cannon.x = canvasElement.width / 2 - (CANNON_COLLISION_SIZE / 2);
+                cannon.x = canvasElement.width / 2; // 中心 X 座標
                 cannon.y = canvasElement.height - CANNON_COLLISION_SIZE - 10;
                 cannon.speed = 6;
+            } else {
+                // 重新計算中心點，並將其限制在邊界內
+                const spacing = CANNON_SPACING;
+                const formationWidth = (cannonCount - 1) * spacing + cannon.imgWidth;
+                const halfFormationWidth = formationWidth / 2;
+
+                cannon.x = Math.max(halfFormationWidth, Math.min(canvasElement.width - halfFormationWidth, cannon.x));
+                cannon.y = canvasElement.height - CANNON_COLLISION_SIZE - 10;
             }
         }
 
@@ -690,6 +882,34 @@
             score += points;
             scoreDisplay.textContent = score;
 
+            // 🎯 炮台升級檢查 (限制為 3 個)
+            if (cannonCount < MAX_CANNON_COUNT) {
+                if (cannonCount === 1 && score >= CANNON_UPGRADE_THRESHOLD_1) {
+                    cannonCount++;
+                    nextCannonThreshold = CANNON_UPGRADE_THRESHOLD_2; // 下一個閾值到 20000
+                    cannonCountDisplay.textContent = cannonCount;
+                    console.log(`恭喜！靈根升級！目前擁有 ${cannonCount} 個炮台！`);
+                    resizeCanvas();
+                } else if (cannonCount === 2 && score >= CANNON_UPGRADE_THRESHOLD_2) {
+                    cannonCount++;
+                    nextCannonThreshold = Infinity; // 達到上限，不再升級
+                    cannonCountDisplay.textContent = cannonCount;
+                    console.log(`恭喜！靈根升級！目前擁有 ${cannonCount} 個炮台！`);
+                    resizeCanvas();
+                }
+            }
+            
+            // 🎯 難度分數等級檢查 (每 10000 分，增加 HP/分數)
+            while (score >= nextScoreTierThreshold) {
+                scoreTier++;
+                nextScoreTierThreshold += SCORE_TIER_THRESHOLD;
+                
+                // 增加生命值和分數乘數
+                currentHealthFactor = Math.pow(DIFFICULTY_HP_MULTIPLIER, scoreTier);
+                currentScoreFactor = Math.pow(DIFFICULTY_SCORE_MULTIPLIER, scoreTier);
+                console.log(`分數等級提升到 ${scoreTier}。HP倍率: ${currentHealthFactor.toFixed(2)}, 分數倍率: ${currentScoreFactor.toFixed(2)}`);
+            }
+
             // 🎯 續能邏輯：只有當前沒有大炸彈時才累積點數
             if (superBombs < 1) {
                 superBombCharge += points;
@@ -706,7 +926,7 @@
             
             updateChargeDisplay();
 
-            // 檢查是否升級
+            // 檢查是否升級 (難度等級 - 控制黴菌速度/生成頻率)
             if (score >= nextDifficultyScore) {
                 difficultyLevel++;
                 levelDisplay.textContent = difficultyLevel;
@@ -774,7 +994,24 @@
             messageTitle.textContent = title;
             messageText.innerHTML = `${message}<br>${score} 個霉運！`; // Final Score message adjusted
             selectionContainer.innerHTML = ''; // 清除選擇介面
+            
+            // 移除舊的按鈕 (除了 startRestartButton)
+            let oldDownloadButton = document.getElementById('downloadScoreCardButton');
+            if (oldDownloadButton) oldDownloadButton.remove();
+            
+            // 創建並插入下載按鈕
+            const downloadButton = document.createElement('button');
+            downloadButton.id = 'downloadScoreCardButton';
+            downloadButton.className = 'control-button secondary';
+            downloadButton.textContent = '下載戰績卡 (PNG)';
+            downloadButton.addEventListener('click', downloadScoreCard);
+            messageBox.insertBefore(downloadButton, startRestartButton);
+
             startRestartButton.textContent = '重新開始'; // Restart button
+            
+            // 準備戰績卡數據
+            prepareScoreCard(score, difficultyLevel, currentCannonConfig, cannonCount);
+            
             messageBox.style.display = 'flex';
             
             // 顯示標題，將 body 內容居中
@@ -782,6 +1019,85 @@
             bodyElement.classList.remove('game-active');
         }
         
+        // ----------------------------------------------------
+        // 🎯 戰績卡下載邏輯
+        // ----------------------------------------------------
+        function prepareScoreCard(finalScore, finalLevel, cannonConfig, finalCannonCount) {
+             // 確保戰績卡可見 (但仍移出視窗外，因為 html2canvas 必須在 DOM 中找到元素)
+            scoreCardTemplate.style.position = 'absolute';
+            scoreCardTemplate.style.left = '-9999px';
+            scoreCardTemplate.style.zIndex = '100'; // 確保在頂層，儘管在屏幕外
+            
+            // 1. 設置最終分數
+            document.getElementById('finalScore').textContent = finalScore;
+            
+            // 2. 修正稱謂：戰機 -> 使用
+            document.getElementById('scoreCardCannonName').textContent = `使用：${cannonConfig.name}`;
+            
+            // 3. 修正等級顯示：移除 LV.
+            document.getElementById('scoreCardLevel').textContent = `等級：${finalLevel}`;
+            
+            // 4. 修正火力稱號
+            let firepowerTitle;
+            switch (finalCannonCount) {
+                case 1:
+                    firepowerTitle = "你是靈根吉吉挑戰者！";
+                    break;
+                case 2:
+                    firepowerTitle = "你是靈根吉吉高手！";
+                    break;
+                case 3:
+                    firepowerTitle = "你是靈根吉吉專家！";
+                    break;
+                default:
+                    firepowerTitle = `火力：x${finalCannonCount} 靈根`; // Fallback
+            }
+            document.getElementById('scoreCardCannonCount').textContent = firepowerTitle;
+
+            // 5. 設置圖片
+            document.getElementById('scoreCardCannonImage').src = cannonConfig.url;
+            document.getElementById('scoreCardCannonImage').alt = cannonConfig.name;
+        }
+
+        function downloadScoreCard() {
+            const downloadButton = document.getElementById('downloadScoreCardButton');
+            downloadButton.disabled = true;
+            downloadButton.textContent = '正在生成...';
+
+            // 調整模板以確保所有內容都能正確渲染 (雖然已經是固定尺寸，但還是確保其尺寸)
+            scoreCardTemplate.style.width = '400px'; 
+            scoreCardTemplate.style.height = '600px';
+
+            html2canvas(scoreCardTemplate, {
+                // 必須設定滾動位置，因為模板被移到螢幕外了
+                scrollX: 0,
+                scrollY: 0,
+                // 設定精確的寬高以確保圖片尺寸一致
+                width: 400,
+                height: 600,
+                scale: 2 // 提高解析度以獲得更清晰的圖片 (800x1200)
+            }).then(canvas => {
+                downloadButton.textContent = '下載完成！';
+                downloadButton.disabled = false;
+                
+                // 創建下載連結
+                const link = document.createElement('a');
+                link.download = `靈根吉吉戰績_${score}.png`;
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // 重設按鈕文字
+                setTimeout(() => {
+                    downloadButton.textContent = '下載戰績卡 (PNG)';
+                }, 2000);
+            }).catch(error => {
+                console.error("生成戰績卡時發生錯誤:", error);
+                downloadButton.textContent = '生成失敗！';
+                downloadButton.disabled = false;
+            });
+        }
         // ----------------------------------------------------
         // 大絕招邏輯
         // ----------------------------------------------------
@@ -818,11 +1134,28 @@
         function handleInput() {
             if (isGameStarted && !isGameOver) {
                 const step = cannon.speed;
+                const formationWidth = (cannonCount - 1) * CANNON_SPACING + cannon.imgWidth;
+                const halfFormationWidth = formationWidth / 2;
+                
+                // 🎯 cannon.x 代表編隊的中心 X 座標
+
                 if (leftPressed) {
-                    cannon.x = Math.max(0, cannon.x - step);
+                    const newCenterX = cannon.x - step;
+                    // 檢查左邊界 (中心 - 半寬 >= 0)
+                    if (newCenterX - halfFormationWidth >= 0) {
+                        cannon.x = newCenterX;
+                    } else {
+                        cannon.x = halfFormationWidth; // 貼齊左邊
+                    }
                 }
                 if (rightPressed) {
-                    cannon.x = Math.min(canvas.width - cannon.width, cannon.x + step);
+                    const newCenterX = cannon.x + step;
+                    // 檢查右邊界 (中心 + 半寬 <= canvas.width)
+                    if (newCenterX + halfFormationWidth <= canvas.width) {
+                        cannon.x = newCenterX;
+                    } else {
+                        cannon.x = canvas.width - halfFormationWidth; // 貼齊右邊
+                    }
                 }
             }
         }
@@ -836,7 +1169,9 @@
             const rect = canvas.getBoundingClientRect();
             const touchX = clientX - rect.left; 
             
-            if (touchX < canvas.width / 2) {
+            // 根據點擊位置決定移動方向
+            const centerX = cannon.x;
+            if (touchX < centerX) {
                 leftPressed = true;
                 rightPressed = false;
             } else {
@@ -894,8 +1229,8 @@
         // ----------------------------------------------------
         
         function getCannonShotRate(cannonName) {
-            if (cannonName === 'POMO') return 0.8; 
-            if (cannonName === 'FENGSHENG') return 1.2;
+            if (cannonName.includes('破魔')) return 0.8; 
+            if (cannonName.includes('豐盛')) return 1.2;
             return 1.0; 
         }
 
@@ -905,39 +1240,46 @@
             // 播放射擊音效，並根據機體類型調整播放速率
             playSfx(sfx.LASER, 0.5, getCannonShotRate(name));
 
-            if (name === '破魔') {
-                bullets.push({
-                    x: cannon.x + cannon.width / 2,
-                    y: cannon.y,
-                    radius: bulletRadius,
-                    color: bulletColor,
-                    durability: bulletDurability,
-                    type: 'pomo', 
-                    hSpeed: 0
-                });
-            } else if (name === '正緣') {
-                for (let i = -1; i <= 1; i++) {
+            const cannonPositions = getCannonPositions();
+
+            // 🎯 針對每一個炮台位置發射子彈
+            cannonPositions.forEach(pos => {
+                const bulletX = pos.centerX;
+
+                if (name.includes('破魔')) {
                     bullets.push({
-                        x: cannon.x + cannon.width / 2 + i * 5, 
+                        x: bulletX,
                         y: cannon.y,
                         radius: bulletRadius,
                         color: bulletColor,
-                        durability: 1, 
-                        type: 'zhengyuan',
-                        hSpeed: i * 0.5
+                        durability: bulletDurability,
+                        type: 'pomo', 
+                        hSpeed: 0
+                    });
+                } else if (name.includes('正緣')) {
+                    for (let i = -1; i <= 1; i++) {
+                        bullets.push({
+                            x: bulletX + i * 5, 
+                            y: cannon.y,
+                            radius: bulletRadius,
+                            color: bulletColor,
+                            durability: 1, 
+                            type: 'zhengyuan',
+                            hSpeed: i * 0.5
+                        });
+                    }
+                } else {
+                    bullets.push({
+                        x: bulletX,
+                        y: cannon.y,
+                        radius: bulletRadius,
+                        color: bulletColor,
+                        durability: 1,
+                        type: 'normal',
+                        hSpeed: 0
                     });
                 }
-            } else {
-                 bullets.push({
-                    x: cannon.x + cannon.width / 2,
-                    y: cannon.y,
-                    radius: bulletRadius,
-                    color: bulletColor,
-                    durability: 1,
-                    type: 'normal',
-                    hSpeed: 0
-                });
-            }
+            });
         }
 
         function updateGame(deltaTime) {
@@ -969,12 +1311,18 @@
             updateExplosions(deltaTime);
 
             if (lives <= 0) {
-                // English Game Over messages
-                showGameOver('靈根能量已用罄', '恭喜您，已經淨化了');
+                showGameOver('靈根能量用罄', '恭喜您，已經淨化了');
             }
         }
         
         function updateMolds(deltaTime, now) {
+            // 🎯 計算當前炮台編隊的邊界
+            const formationWidth = (cannonCount - 1) * CANNON_SPACING + cannon.imgWidth;
+            const halfFormationWidth = formationWidth / 2;
+
+            const formationX_left = cannon.x - halfFormationWidth; 
+            const formationX_right = cannon.x + halfFormationWidth; 
+
             mold = mold.filter(m => {
                 m.y += m.ySpeed;
 
@@ -1012,10 +1360,10 @@
 
                 if (m.y - m.radius > canvas.height) return false; 
 
-                // 碰撞檢測 - 角色
+                // 🎯 碰撞檢測 - 角色 (檢查與整個編隊的矩形碰撞)
                 if (
                     m.y + m.radius >= cannon.y && m.y - m.radius <= cannon.y + cannon.height &&
-                    m.x + m.radius >= cannon.x && m.x - m.radius <= cannon.x + cannon.width
+                    m.x + m.radius >= formationX_left && m.x - m.radius <= formationX_right
                 ) {
                     lives--;
                     updateLivesDisplay();
@@ -1050,28 +1398,37 @@
                         m.hitTimer = 100;
                         moldHitThisFrame = true; // 標記被擊中
 
-                        if (m.type === 'armored' && m.health === 1) m.color = m.unarmoredColor;
-
+                        // 🎯 裝甲黴菌顏色變化
+                        if (m.type === 'armored' && m.health < healthBeforeHit && m.health <= m.armoredThreshold) {
+                             m.color = m.unarmoredColor; // 血量低於門檻時改變顏色
+                        }
+                        
+                        // 🎯 巨大黴菌尺寸變化 (使用 initialHealth 確保比例穩定)
                         if (m.type === 'huge') {
-                            if (m.health <= 4 && m.radius > m.normalRadius) m.radius = m.normalRadius;
-                            else if (m.health <= 8 && m.radius > m.medRadius) m.radius = m.medRadius;
+                            const healthRatio = m.health / m.initialHealth;
+                            if (healthRatio <= 1/3 && m.radius > m.normalRadius) m.radius = m.normalRadius;
+                            else if (healthRatio <= 2/3 && m.radius > m.medRadius) m.radius = m.medRadius;
                         }
                         
                         if (m.health <= 0) {
                             // 擊毀音效 (Pop.mp3, 正常播放)
                             playSfx(sfx.POP, 0.7, 1.0); 
                             
-                            let points = 10;
+                            let basePoints = 10;
                             switch (m.type) {
-                                case 'fast': points = 25; break;
-                                case 'armored': points = 30; break;
-                                case 'weaving': points = 35; break;
-                                case 'sturdy': points = 40; break;
-                                case 'huge': points = 50; break;
-                                case 'lively': points = 20; break;
-                                case 'dashing': points = 30; break;
-                                default: points = 10; break;
+                                case 'fast': basePoints = 25; break;
+                                case 'armored': basePoints = 30; break;
+                                case 'weaving': basePoints = 35; break;
+                                case 'sturdy': basePoints = 40; break;
+                                case 'huge': basePoints = 50; break;
+                                case 'lively': basePoints = 20; break;
+                                case 'dashing': basePoints = 30; break;
+                                default: basePoints = 10; break;
                             }
+                            
+                            // 🎯 應用難度分數等級的分數乘數，並四捨五入
+                            const points = Math.round(basePoints * currentScoreFactor);
+
                             updateScore(points);
                             createExplosion(m.x, m.y, m.radius, m.color);
                         } else if (healthBeforeHit > 0) {
@@ -1190,9 +1547,9 @@
                     ctx.fill();
                 }
 
-                const maxHealth = (m.type === 'huge' ? 12 : (m.type === 'sturdy' ? 6 : (m.type === 'armored' ? 2 : 1)));
-                if (maxHealth > 1) {
-                    const healthRatio = m.health / maxHealth;
+                // 🎯 繪製血條 (使用 initialHealth)
+                if (m.initialHealth > 1) {
+                    const healthRatio = m.health / m.initialHealth;
                     const barWidth = m.radius * 2;
                     const barHeight = 4;
                     const barX = m.x - m.radius;
@@ -1237,23 +1594,27 @@
                 ctx.globalAlpha = 1.0;
             });
 
-            // 4. 繪製砲台 (圖片)
-            if (cannonImage.isLoaded) {
-                ctx.drawImage(
-                    cannonImage,
-                    cannon.x,
-                    cannon.y,
-                    cannon.imgWidth,
-                    cannon.imgHeight
-                );
-            } else {
-                ctx.fillStyle = 'red';
-                ctx.fillRect(cannon.x, cannon.y, cannon.width, cannon.height);
-                ctx.fillStyle = 'white';
-                ctx.font = '10px Inter';
-                ctx.textAlign = 'center';
-                ctx.fillText(currentCannonConfig.name, cannon.x + cannon.width / 2, cannon.y + cannon.height / 2);
-            }
+            // 4. 🎯 繪製炮台編隊
+            const cannonPositions = getCannonPositions();
+            cannonPositions.forEach(pos => {
+                if (cannonImage.isLoaded) {
+                    ctx.drawImage(
+                        cannonImage,
+                        pos.drawX, // 使用新的繪圖 X 座標
+                        cannon.y,
+                        cannon.imgWidth,
+                        cannon.imgHeight
+                    );
+                } else {
+                    // Fallback: 繪製方塊
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(pos.drawX, cannon.y, cannon.width, cannon.height);
+                    ctx.fillStyle = 'white';
+                    ctx.font = '10px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(currentCannonConfig.name.replace('靈根', ''), pos.centerX, cannon.y + cannon.height / 2);
+                }
+            });
             
             // 恢復畫布狀態
             ctx.restore();
@@ -1306,13 +1667,18 @@
         };
 
         // ----------------------------------------------------
-        // 角色選擇與畫面顯示 (使用英文)
+        // 角色選擇與畫面顯示
         // ----------------------------------------------------
 
         function showCharacterSelection() {
             selectionContainer.innerHTML = '';
-            messageTitle.textContent = '選擇您的靈根'; // English Title
-            startRestartButton.textContent = '出發'; // English Button
+            messageTitle.textContent = '選擇您的靈根';
+            startRestartButton.textContent = '出發'; 
+            
+            // 移除可能存在的下載按鈕
+            let oldDownloadButton = document.getElementById('downloadScoreCardButton');
+            if (oldDownloadButton) oldDownloadButton.remove();
+            
             messageText.textContent = CANNONS_CONFIG[selectedCannonId].description || '';
 
             Object.keys(CANNONS_CONFIG).forEach(id => {
@@ -1327,7 +1693,7 @@
                 img.height = CANNON_COLLISION_SIZE;
 
                 const nameLabel = document.createElement('p');
-                nameLabel.textContent = cannon.name;
+                nameLabel.textContent = cannon.name.replace('靈根', ''); // 選擇畫面只顯示名稱
 
                 card.appendChild(img);
                 card.appendChild(nameLabel);
@@ -1370,21 +1736,31 @@
             superBombs = 0;
             isSuperExploding = false;
 
+            // 🎯 靈根升級狀態初始化
+            cannonCount = 1;
+            nextCannonThreshold = CANNON_UPGRADE_THRESHOLD_1;
+            
+            // 🎯 難度隨分數增加狀態初始化
+            scoreTier = 0;
+            nextScoreTierThreshold = SCORE_TIER_THRESHOLD;
+            currentHealthFactor = 1.0;
+            currentScoreFactor = 1.0; 
+
             gameTitleElement.style.display = 'block';
             bodyElement.classList.remove('game-active');
 
-            resizeCanvas();
-
+            // 🎯 重新定義 cannon.x 為編隊的中心點
             cannon.width = CANNON_COLLISION_SIZE;
             cannon.height = CANNON_COLLISION_SIZE;
             cannon.imgWidth = CANNON_DISPLAY_SIZE;
             cannon.imgHeight = CANNON_DISPLAY_SIZE;
-            cannon.x = canvas.width / 2 - (CANNON_COLLISION_SIZE / 2);
+            cannon.x = canvas.width / 2; // 中心 X 座標
             cannon.y = canvas.height - CANNON_COLLISION_SIZE - 10;
             cannon.speed = 6;
             
             scoreDisplay.textContent = score;
             levelDisplay.textContent = difficultyLevel;
+            cannonCountDisplay.textContent = cannonCount;
 
             updateLivesDisplay();
             updateChargeDisplay();
