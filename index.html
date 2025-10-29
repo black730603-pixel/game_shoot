@@ -1032,22 +1032,22 @@
             document.getElementById('finalScore').textContent = finalScore;
             
             // 2. 修正稱謂：戰機 -> 使用
-            document.getElementById('scoreCardCannonName').textContent = `使用：${cannonConfig.name}`;
+            document.getElementById('scoreCardCannonName').textContent = `${cannonConfig.name}`;
             
             // 3. 修正等級顯示：移除 LV.
-            document.getElementById('scoreCardLevel').textContent = `等級：${finalLevel}`;
+            document.getElementById('scoreCardLevel').textContent = `LV.${finalLevel}`;
             
             // 4. 修正火力稱號
             let firepowerTitle;
             switch (finalCannonCount) {
                 case 1:
-                    firepowerTitle = "你是靈根吉吉挑戰者！";
+                    firepowerTitle = "您是靈根吉吉學徒！";
                     break;
                 case 2:
-                    firepowerTitle = "你是靈根吉吉高手！";
+                    firepowerTitle = "您是靈根吉吉專家！";
                     break;
                 case 3:
-                    firepowerTitle = "你是靈根吉吉專家！";
+                    firepowerTitle = "您是靈根吉吉大師！";
                     break;
                 default:
                     firepowerTitle = `火力：x${finalCannonCount} 靈根`; // Fallback
